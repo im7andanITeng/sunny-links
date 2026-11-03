@@ -1,0 +1,68 @@
+name: Build iPhone .ipa
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  ipa:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find the game folder
+        run: |
+          pkg=$(find . -maxdepth 6 -name package.json -not -path '*/node_modules/*' -exec grep -l '"build:cap"' {} + | head -n 1)
+          if [ -z "$pkg" ]; then
+            echo "GAME NOT FOUND. These are the files in the repo:"
+            find . -maxdepth 4 -not -path './.git/*' | head -n 200
+            exit 1
+          fi
+          dir=$(cd "$(dirname "$pkg")" && pwd)
+          echo "Game folder: $dir"
+          echo "GAME_DIR=$dir" >> "$GITHUB_ENV"
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install packages
+        working-directory: ${{ env.GAME_DIR }}
+        run: bun install
+
+      - name: Build the game bundle
+        working-directory: ${{ env.GAME_DIR }}
+        run: bun run build:cap
+
+      - name: Copy the game into the iPhone project
+        working-directory: ${{ env.GAME_DIR }}
+        run: bunx cap sync ios
+
+      - name: Build the app without signing
+        working-directory: ${{ env.GAME_DIR }}
+        run: >
+          xcodebuild
+          -workspace ios/App/App.xcworkspace
+          -scheme App
+          -configuration Release
+          -destination 'generic/platform=iOS'
+          -derivedDataPath ios/App/build
+          CODE_SIGNING_ALLOWED=NO
+          CODE_SIGNING_REQUIRED=NO
+          CODE_SIGN_IDENTITY=""
+          build
+
+      - name: Package the .ipa
+        working-directory: ${{ env.GAME_DIR }}
+        run: |
+          mkdir -p payload/Payload
+          cp -R ios/App/build/Build/Products/Release-iphoneos/App.app payload/Payload/
+          cd payload && zip -qry "$GITHUB_WORKSPACE/SunnyLinks.ipa" Payload
+          ls -la "$GITHUB_WORKSPACE/SunnyLinks.ipa"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SunnyLinks-ipa
+          path: SunnyLinks.ipa
+          retention-days: 30

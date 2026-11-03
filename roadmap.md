@@ -1,0 +1,11 @@
+# Game changes
+- [x] Show putting tips only in Level 1.
+- [x] Save and restore the current hole, scores, strokes, and ball position.
+- [x] Improve small-phone layout and rendering performance.
+- [x] Test resume and phone play; refresh the native app copy.
+- [x] Package v9 for the iPhone build (VIP, offline mode, coin shop, admin panel).
+- [x] Move the Admin Panel button into the profile menu (tidy menu).
+- [x] 🤖 Cheat Assistant in the Admin Panel (admins only): type commands like "make my ball 2x faster", "all mud floor", "spooky background" and the game obeys.
+- [x] Package v10 for the iPhone build (cheat assistant included) and save the folder for GitHub.
+- [x] Show the gold DEV badge next to admin names on the Online Leaderboard (flag stamped by the server, so players can't fake it).
+- [x] Package v11 for the iPhone build (DEV badge on leaderboard names) and refresh the builder's copy.
